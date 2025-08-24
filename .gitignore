@@ -1,0 +1,46 @@
+# Environment variables - JANGAN commit credentials!
+.env
+
+# Log files
+*.log
+error.log
+failed_uploads.txt
+urls.txt
+
+# Counter file
+.counter.txt
+
+# Working directories
+input/
+backup/
+work/
+enhanced/
+
+# Watermark file (jika berisi logo pribadi)
+watermark.png
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp

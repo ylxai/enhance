@@ -7,7 +7,8 @@ import shutil
 from PIL import Image
 from config import (
     RAW_BACKUP_DIR, JPG_BACKUP_DIR, WORK_DIR, ENHANCED_DIR,
-    ENABLE_WATERMARK, CEREBRIUM_API, ENHANCEMENT_TASK, OUTPUT_PREFIX
+    ENABLE_WATERMARK, CEREBRIUM_API, CEREBRIUM_AUTH_TOKEN, ENHANCEMENT_TASK, OUTPUT_PREFIX,
+    TASK_OPTIONS, ACTIVE_TASK_TYPE
 )
 from utils import wait_until_complete, safe_open_image, add_watermark, log_error
 from uploader import upload_to_r2
@@ -104,7 +105,7 @@ def prepare_for_api(img, base_name):
 
 def enhance_with_cerebrium(work_path):
     """
-    Enhance image menggunakan Cerebrium API
+    Enhance image menggunakan Cerebrium API dengan AI models
     
     Args:
         work_path (str): Path ke file yang akan di-enhance
@@ -112,19 +113,43 @@ def enhance_with_cerebrium(work_path):
     Returns:
         tuple: (success: bool, enhanced_bytes: bytes or error_message: str)
     """
-    print(f"🚀 Sending {os.path.basename(work_path)} to Cerebrium API...")
+    # Get current task based on active task type
+    current_task = TASK_OPTIONS.get(ACTIVE_TASK_TYPE, ENHANCEMENT_TASK)
+    
+    print(f"🚀 Sending {os.path.basename(work_path)} to Cerebrium AI...")
+    print(f"🤖 Task Type: {ACTIVE_TASK_TYPE}")
+    print(f"🎯 AI Task: {current_task}")
+    
+    # Display what AI models will be used
+    if current_task == "full_enhance":
+        print("🔥 AI Pipeline: Real-ESRGAN → Denoise → GFPGAN")
+        print("   📈 Expected: 4x upscaling + face restoration + noise reduction")
+    elif current_task == "upscale":
+        print("🔥 AI Model: Real-ESRGAN (4x upscaling)")
+        print("   📈 Expected: 4x resolution increase with detail preservation")
+    elif current_task == "face_restore":
+        print("🔥 AI Model: GFPGAN (face restoration)")
+        print("   📈 Expected: Enhanced facial features and skin quality")
+    elif current_task == "denoise":
+        print("🔥 AI Process: Advanced denoising")
+        print("   📈 Expected: Noise reduction without detail loss")
+    elif current_task == "crop_5r":
+        print("🔥 AI Process: 5R crop + enhancement")
+        print("   📈 Expected: Wedding photo format + quality improvement")
     
     success, result = enhance_image_cerebrium(
         image_path=work_path,
-        task=ENHANCEMENT_TASK,
-        api_endpoint=CEREBRIUM_API
+        task=current_task,
+        api_endpoint=CEREBRIUM_API,
+        auth_token=CEREBRIUM_AUTH_TOKEN
     )
     
     if success:
-        print(f"✅ Cerebrium API enhancement successful! Size: {len(result)} bytes")
+        print(f"✅ AI enhancement successful! Size: {len(result)} bytes")
+        print(f"🎉 {current_task} processing completed!")
         return True, result
     else:
-        print(f"❌ Cerebrium API enhancement failed: {result}")
+        print(f"❌ AI enhancement failed: {result}")
         return False, result
 
 

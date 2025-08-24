@@ -13,14 +13,28 @@ R2_BUCKET = os.getenv("CLOUDFLARE_R2_BUCKET_NAME")
 R2_ENDPOINT = os.getenv("CLOUDFLARE_R2_ENDPOINT")
 R2_ACCESS_KEY = os.getenv("CLOUDFLARE_R2_ACCESS_KEY_ID")
 R2_SECRET_KEY = os.getenv("CLOUDFLARE_R2_SECRET_ACCESS_KEY")
-PUBLIC_DOMAIN = "https://photos.hafiportrait.photography"
+PUBLIC_DOMAIN = os.getenv("CLOUDFLARE_R2_PUBLIC_URL", "https://photos.hafiportrait.photography")
 
 # -------- CEREBRIUM API CONFIG --------
-# PENTING: Ganti 'your-app-name' dengan nama app Cerebrium Anda yang sebenarnya
-CEREBRIUM_API = "https://your-app-name.cerebrium.ai/predict"
+CEREBRIUM_API = "https://api.aws.us-east-1.cerebrium.ai/v4/p-82c79058/image-enhancement-v2/predict"
+CEREBRIUM_AUTH_TOKEN = os.getenv("CEREBRIUM_AUTH_TOKEN")
 
-# Task yang akan digunakan untuk semua foto
-ENHANCEMENT_TASK = "full_enhance"  # upscale + denoise + face_restore
+# -------- AI ENHANCEMENT CONFIG --------
+# Available tasks: upscale, face_restore, full_enhance, denoise, crop_5r
+ENHANCEMENT_TASK = "general"  # Real-ESRGAN + GFPGAN + Denoise pipeline
+
+# Task options untuk different scenarios:
+TASK_OPTIONS = {
+    "portraits": "full_enhance",      # Real-ESRGAN + GFPGAN + Denoise (best for faces)
+    "landscapes": "upscale",          # Real-ESRGAN only (best for scenery)
+    "wedding": "crop_5r",             # Crop to 5R ratio for wedding photos
+    "damaged": "face_restore",        # GFPGAN only for damaged faces
+    "noisy": "denoise",               # Denoise only for noisy images
+    "general": "full_enhance"         # Default: complete AI pipeline
+}
+
+# Current active task (change this to switch enhancement type)
+ACTIVE_TASK_TYPE = "general"  # Use portraits setting by default
 
 # -------- DIRECTORY CONFIG --------
 INPUT_DIR = "input"

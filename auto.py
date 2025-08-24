@@ -63,15 +63,38 @@ def main():
     if not check_r2_connection():
         print("⚠️ Warning: R2 connection failed. Files will be saved locally only.")
     
-    # Check Cerebrium API endpoint
-    from config import CEREBRIUM_API
+    # Check Cerebrium API endpoint and show AI enhancement info
+    from config import CEREBRIUM_API, ENHANCEMENT_TASK, TASK_OPTIONS, ACTIVE_TASK_TYPE
     if "your-app-name" in CEREBRIUM_API:
         print("⚠️ WARNING: Please update CEREBRIUM_API in config.py with your actual app name!")
         print(f"   Current: {CEREBRIUM_API}")
     
+    # Display AI enhancement configuration
     print(f"📁 Monitoring folder: {INPUT_DIR}/")
     print(f"📋 Supported formats: {', '.join(SUPPORTED_FORMATS)}")
-    print("🎯 Enhancement task: full_enhance (upscale + denoise + face_restore)")
+    print()
+    print("🤖 AI ENHANCEMENT CONFIGURATION:")
+    print(f"   🎯 Active Task Type: {ACTIVE_TASK_TYPE}")
+    print(f"   🚀 Current Task: {TASK_OPTIONS.get(ACTIVE_TASK_TYPE, ENHANCEMENT_TASK)}")
+    print()
+    print("🎮 Available Enhancement Options:")
+    for task_type, task_name in TASK_OPTIONS.items():
+        status = "🟢 ACTIVE" if task_type == ACTIVE_TASK_TYPE else "⚪"
+        if task_name == "full_enhance":
+            description = "Real-ESRGAN + GFPGAN + Denoise"
+        elif task_name == "upscale":
+            description = "Real-ESRGAN 4x upscaling"
+        elif task_name == "face_restore":
+            description = "GFPGAN face restoration"
+        elif task_name == "denoise":
+            description = "AI noise reduction"
+        elif task_name == "crop_5r":
+            description = "5R crop + enhancement"
+        else:
+            description = task_name
+        print(f"   {status} {task_type}: {task_name} ({description})")
+    print()
+    print("💡 To change task: Edit ACTIVE_TASK_TYPE in config.py")
     print("=" * 60)
     
     # Setup file monitoring

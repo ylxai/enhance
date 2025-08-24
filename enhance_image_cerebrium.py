@@ -8,7 +8,7 @@ import requests
 from typing import Tuple, Union
 
 
-def enhance_image_cerebrium(image_path: str, task: str, api_endpoint: str) -> Tuple[bool, Union[bytes, str]]:
+def enhance_image_cerebrium(image_path: str, task: str, api_endpoint: str, auth_token: str = None) -> Tuple[bool, Union[bytes, str]]:
     """
     Mengirim gambar lokal ke API Cerebrium untuk diproses dan mengembalikan hasil
     
@@ -36,16 +36,26 @@ def enhance_image_cerebrium(image_path: str, task: str, api_endpoint: str) -> Tu
         except Exception as e:
             return False, f"Error membaca file gambar: {str(e)}"
         
-        # 2. Buat payload JSON
+        # 2. Buat payload JSON - format untuk Cerebrium
         payload = {
-            "image_base64": image_base64,
-            "task": task
+            "item": {
+                "image_base64": image_base64,
+                "task": task
+            }
         }
         
         # 3. Setup headers
         headers = {
             "Content-Type": "application/json"
         }
+        
+        # Add authorization header if token provided
+        if auth_token:
+            # Check if token already has Bearer prefix
+            if auth_token.startswith("Bearer "):
+                headers["Authorization"] = auth_token
+            else:
+                headers["Authorization"] = f"Bearer {auth_token}"
         
         print(f"Mengirim request ke API dengan task: {task}")
         
@@ -75,14 +85,31 @@ def enhance_image_cerebrium(image_path: str, task: str, api_endpoint: str) -> Tu
         # 6. Parse respons JSON
         try:
             response_data = response.json()
+            print(f"🔍 Debug - Status Code: {response.status_code}")
+            print(f"🔍 Debug - Response data keys: {list(response_data.keys()) if isinstance(response_data, dict) else 'Not a dict'}")
+            print(f"🔍 Debug - Full Response: {response_data}")
         except Exception as e:
+            print(f"🔍 Debug - Raw response text: {response.text}")
             return False, f"Error parsing JSON response: {str(e)}"
         
         # 7. Ekstrak data gambar dari respons
-        if "processed_image" not in response_data:
-            return False, "Response tidak mengandung 'processed_image'"
-        
-        processed_image_data = response_data["processed_image"]
+        # Cek format response Cerebrium: {'result': {...}, 'run_time_ms': ...}
+        if "result" in response_data:
+            result = response_data["result"]
+            
+            # Cek jika ada error di result
+            if isinstance(result, dict) and "error" in result:
+                return False, f"API error: {result['error']}"
+            
+            # Cek berbagai format result
+            if isinstance(result, dict) and "processed_image" in result:
+                processed_image_data = result["processed_image"]
+            elif isinstance(result, str):
+                processed_image_data = result
+            else:
+                return False, f"Format result tidak dikenali: {result}"
+        else:
+            return False, f"Response tidak mengandung 'result'. Response: {response_data}"
         
         # 8. Ekstrak base64 string dari format "data:image/png;base64,..."
         try:
